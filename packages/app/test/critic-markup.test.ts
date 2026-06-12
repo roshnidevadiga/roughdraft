@@ -1137,11 +1137,14 @@ describe("Markdown rich-text round-trip regressions", () => {
     expect(richTextRoundTrip(input)).toBe(input);
   });
 
-  it("preserves table cells containing escaped pipes and inline code pipes", () => {
+  it("preserves editable table cells containing escaped pipes and inline code pipes", () => {
+    // Valid GFM escapes literal pipes as \| (including inside inline code).
+    // Such tables now render as real, editable tables and round-trip losslessly,
+    // instead of being frozen into an invisible raw block.
     const input = [
       "| Column | Value |",
       "| --- | --- |",
-      "| Escaped | `a | b` and plain a \\| b |",
+      "| Escaped | `a \\| b` and plain a \\| b |",
       "",
     ].join("\n");
 

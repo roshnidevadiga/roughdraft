@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  protectRichTextRoundTripMarkdown,
   splitYamlFrontmatter,
   toHtml,
   toMarkdown,
@@ -105,6 +106,64 @@ describe("toHtml", () => {
         "| --- | --- |",
         "| First | Ready |",
         "| Second | Open |",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("renders pipe-sensitive tables as real tables through the rich-text render path", () => {
+    const escapedPipe = [
+      "| Item | Note |",
+      "| --- | --- |",
+      "| literal pipe a \\| b | low |",
+      "",
+    ].join("\n");
+    const codeSpanPipe = [
+      "| Cmd | Note |",
+      "| --- | --- |",
+      "| `a \\| b` | piped code |",
+      "",
+    ].join("\n");
+
+    expect(toHtml(protectRichTextRoundTripMarkdown(escapedPipe))).toContain(
+      "<table>",
+    );
+    expect(toHtml(protectRichTextRoundTripMarkdown(codeSpanPipe))).toContain(
+      "<table>",
+    );
+  });
+
+  it("round-trips an escaped-pipe table to valid GFM markdown", () => {
+    const source = [
+      "| Item | Note |",
+      "| --- | --- |",
+      "| literal pipe a \\| b | low |",
+      "",
+    ].join("\n");
+
+    expect(toMarkdown(toHtml(source))).toBe(
+      [
+        "| Item | Note |",
+        "| --- | --- |",
+        "| literal pipe a \\| b | low |",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("round-trips a code-span pipe inside a table cell to valid GFM markdown", () => {
+    const source = [
+      "| Cmd | Note |",
+      "| --- | --- |",
+      "| `a \\| b` | piped code |",
+      "",
+    ].join("\n");
+
+    expect(toMarkdown(toHtml(source))).toBe(
+      [
+        "| Cmd | Note |",
+        "| --- | --- |",
+        "| `a \\| b` | piped code |",
         "",
       ].join("\n"),
     );

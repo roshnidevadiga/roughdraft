@@ -73,49 +73,8 @@ function protectIndentedCodeAfterLists(markdown: string): string {
   );
 }
 
-function codeSpanContainsPipe(value: string): boolean {
-  return /`[^`\n]*\|[^`\n]*`/.test(value);
-}
-
-function protectPipeSensitiveTables(markdown: string): string {
-  const lines = markdown.match(/[^\r\n]*(?:\r?\n|$)/g) ?? [];
-  const output: string[] = [];
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index] ?? "";
-    const nextLine = lines[index + 1] ?? "";
-
-    if (
-      !line.includes("|") ||
-      !/^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(nextLine)
-    ) {
-      output.push(line);
-      continue;
-    }
-
-    const tableLines = [line, nextLine];
-    index += 2;
-
-    while (index < lines.length) {
-      const row = lines[index] ?? "";
-      if (!row.trim() || !row.includes("|")) break;
-      tableLines.push(row);
-      index += 1;
-    }
-
-    const raw = tableLines.join("");
-    const needsProtection = raw.includes("\\|") || codeSpanContainsPipe(raw);
-    output.push(needsProtection ? createRawMarkdownBlock(raw) : raw);
-    index -= 1;
-  }
-
-  return output.join("");
-}
-
 export function protectRichTextRoundTripMarkdown(markdown: string): string {
-  return protectPipeSensitiveTables(
-    protectIndentedCodeAfterLists(protectRawHtmlBlocks(markdown)),
-  );
+  return protectIndentedCodeAfterLists(protectRawHtmlBlocks(markdown));
 }
 
 function normalizeMarkdownPath(path: string): string {
